@@ -32,5 +32,5 @@ jobs:
           draft: false
           makeLatest: true
           name: ${{ steps.semver.outputs.next }}
-          token: ${{ github.token }}
+          token: ${{ secrets.GH_TOKEN }}
           tag: ${{ steps.semver.outputs.nextStrict }}
