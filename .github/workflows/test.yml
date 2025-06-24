@@ -32,6 +32,7 @@ jobs:
           check_name: Test report
           comment: true
           detailed_summary: true
+          simplified_summary: true
           include_time_in_summary: true
           include_passed: true
           group_suite: true
