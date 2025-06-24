@@ -1,0 +1,19 @@
+{
+  "include": ["./src"],
+  "exclude": ["dist", "build", "node_modules"],
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["dom", "ES2020"],
+    "module": "esnext",
+    "rootDir": "src",
+    "baseUrl": "./src",
+    "outDir": "./dist",
+    "declaration": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "strict": true,
+  }
+}

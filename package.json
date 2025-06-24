@@ -1,0 +1,49 @@
+{
+  "name": "@fxfn/ipa",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "@fxfn/ipa": "./dist/bin/generate.js"
+  },
+  "exports": {
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "default": "./dist/server.js"
+    },
+    ".": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js",
+      "default": "./dist/client.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "chmod +x dist/bin/generate.js",
+    "dev": "tsx watch src/bin/generate.ts",
+    "generate": "node --import tsx src/bin/generate.ts",
+    "test": "vitest --ui",
+    "test:ci": "vitest",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "@vitest/coverage-istanbul": "3.2.4",
+    "@vitest/ui": "3.2.4",
+    "tsx": "^4.20.3",
+    "typescript": "^5.7.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "packageManager": "pnpm@10.6.0+sha512.df0136e797db0cfa7ec1084e77f3bdf81bacbae9066832fbf95cba4c2140ad05e64f316cde51ce3f99ea00a91ffc702d6aedd3c0f450f895e3e7c052fe573cd8"
+}
