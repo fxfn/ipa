@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      
+      - name: Version
+        id: version
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: "v"
