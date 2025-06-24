@@ -1,6 +1,36 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createClient } from '../src/client.js'
 
+declare module '../src/client.js' {
+  interface SuccessWrapper<T> {
+    success: true,
+    result: T
+  }
+
+  interface ErrorWrapper<T> {
+    success: false,
+    result: null,
+    error: { message: string }
+  }
+}
+
+const interceptors = {
+  success: (data) => {
+    return {
+      success: true,
+      error: null,
+      result: data
+    }
+  },
+  error: (error) => {
+    return {
+      success: false,
+      result: null,
+      error: error
+    }
+  }
+}
+
 describe('createClient', () => {
   it('should create a client', () => {
     const client = createClient({
@@ -19,11 +49,8 @@ describe('createClient', () => {
             id: number
           },
           response: {
-            type: 'object',
-            properties: {
-              id: {
-                type: 'string'
-              }
+            200: {
+              foo: "bar"
             }
           }
         }
@@ -37,7 +64,7 @@ describe('createClient', () => {
     expect(client['/'].get).toBeDefined()
   })
 
-  it('should create a client with an access token', async () => {
+  it('should create a client with headers', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -59,7 +86,9 @@ describe('createClient', () => {
 
     const client = createClient<APISchema>({
       baseUrl: 'https://api.example.com',
-      accessToken: '123'
+      headers: {
+        authorization: 'bearer 123'
+      }
     })
 
     await client['/'].get({ query: { id: 123 } })
@@ -69,6 +98,96 @@ describe('createClient', () => {
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
+          'authorization': 'bearer 123'
+        })
+      })
+    )
+  })
+
+  it('should pass headers to the request', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ id: '123' })
+    })
+
+    // Mock the global fetch function
+    global.fetch = mockFetch
+
+    type APISchema = {
+      '/': {
+        GET: {
+          query: {
+            id: number
+          }
+        }
+      }
+    }
+
+    const client = createClient<APISchema>({
+      baseUrl: 'https://api.example.com',
+    })
+
+    await client['/'].get({ 
+      query: { 
+        id: 123 
+      },
+      headers: {
+        authorization: 'bearer 123'
+      }
+    })
+    
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.example.com/?id=123',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          'authorization': 'bearer 123'
+        })
+      })
+    )
+  })
+
+  it('should combine the headers with the request headers', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ id: '123' })
+    })
+    
+    type APISchema = {
+      '/': {
+        GET: {
+          query: {
+            id: number
+          }
+        }
+      }
+    }
+
+    global.fetch = mockFetch
+    const client = createClient<APISchema>({
+      baseUrl: 'https://api.example.com',
+      headers: {
+        authorization: 'bearer 123'
+      }
+    })
+
+    await client['/'].get({ 
+      query: { 
+        id: 123 
+      },
+      headers: {
+        'x-api-key': '43214321'
+      }
+    })
+    
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.example.com/?id=123',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          'x-api-key': '43214321',
           'authorization': 'bearer 123'
         })
       })
@@ -196,95 +315,65 @@ describe('createClient', () => {
         POST: {
           body: {
             name: string
+          },
+          response: {
+            200: {
+              foo: "bar"
+            }
           }
         }
       }
     }
 
-    const client = createClient<APISchema, unknown, { message: string }>({
-      baseUrl: 'https://api.example.com'
+    const client = createClient<APISchema>({
+      baseUrl: 'https://api.example.com',
+      interceptors: interceptors
     })
 
     const result = await client['/'].post({ body: { name: 'John' } })
-    expect(result.error).toBeDefined()
-    expect(result.error!.message).toContain('Bad Request')
+    if (!result.success) {
+      expect(result.error).toBeDefined()
+      expect(result.error.message).toContain('Bad Request')
+    }
   })
 
-  it('should allow a user to define the wrapper functions for ok and error', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ id: '123' })
-    })
-
-    global.fetch = mockFetch
-
+  it('should return the correct type when the api is called', async () => {
     type APISchema = {
       '/': {
         GET: {
           query: {
             id: number
           }
-        }
-      }
-    }
-
-    const client = createClient<APISchema>({
-      baseUrl: 'https://api.example.com',
-      ok: (result: unknown) => ({
-        status: 'happy',
-        result
-      }),
-      error: (error: unknown) => ({
-        status: 'sad',
-        error
-      })
-    })
-
-    const result = await client['/'].get({ query: { id: 123 } })
-    expect(result.success).toBe(true)
-    expect(result.result).toBeDefined()
-    expect(result.result!.status).toBe('happy')
-    expect(result.result!.result).toEqual({ id: '123' })
-  })
-
-  it('should infer types from ok and error functions', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ id: '123' })
-    })
-
-    global.fetch = mockFetch
-
-    type APISchema = {
-      '/': {
-        GET: {
-          query: {
-            id: number
+          response: {
+            200: {
+              foo: "bar"
+            }
           }
         }
       }
     }
 
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ foo: "bar" })
+    })
+
+    global.fetch = mockFetch
     const client = createClient<APISchema>({
       baseUrl: 'https://api.example.com',
-      ok: (result: unknown) => ({
-        status: 'happy' as const,
-        data: result
-      }),
-      error: (error: unknown) => ({
-        status: 'sad' as const,
-        message: String(error)
-      })
+      interceptors: interceptors
     })
 
     const result = await client['/'].get({ query: { id: 123 } })
-    
-    // TypeScript should infer the correct types
     expect(result.success).toBe(true)
     expect(result.result).toBeDefined()
-    expect(result.result!.status).toBe('happy')
-    expect(result.result!.data).toEqual({ id: '123' })
+    if (result.success) {
+      expect(result.result.foo).toBe('bar')
+    }
+    else {
+      // purposefully fail the test
+      expect(1).toBe(2)
+    }
   })
 })
