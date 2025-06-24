@@ -9,4 +9,8 @@ describe('casing', () => {
   it('should convert pascal case', () => {
     expect(pascalCase('booking-service')).toBe('BookingService')
   })
+
+  it('should preserve pascal case when converting', () => {
+    expect(pascalCase('BookingService')).toBe('BookingService')
+  })
 })
