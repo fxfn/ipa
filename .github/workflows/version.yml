@@ -33,5 +33,4 @@ jobs:
           makeLatest: true
           name: ${{ steps.semver.outputs.next }}
           token: ${{ github.token }}
-          tag: ${{ steps.semver.outputs.next }}
-          
+          tag: ${{ steps.semver.outputs.nextStrict }}
