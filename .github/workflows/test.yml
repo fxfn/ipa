@@ -33,7 +33,7 @@ jobs:
           comment: true
           detailed_summary: true
           include_time_in_summary: true
-          simplified_summary: true
+          # simplified_summary: true
           group_suite: true
           include_empty_in_summary: false
           check_title_template: "{{TEST_NAME}}"
