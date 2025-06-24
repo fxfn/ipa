@@ -4,6 +4,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   publish:
@@ -19,9 +20,16 @@ jobs:
         with:
           version: 10.12.3
 
+      - name: strip 'v' from version
+        id: version
+        run: |
+          echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "${{ github.event.release.tag_name }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+
       - run: pnpm i
       - run: pnpm test:ci
       - run: pnpm run build
-      - run: pnpm publish --provenance --access public --no-git-checks
+      - run: pnpm publish --provenance --access public --no-git-checks --new-version ${{ steps.version.outputs.version }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
