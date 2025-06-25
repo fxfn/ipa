@@ -2,8 +2,8 @@ declare module '@fxfn/ipa' {
   interface SuccessWrapper<T> {
     result: T
   }
-  interface ErrorWrapper<T> {
-    error: T
+  interface ErrorWrapper {
+    error: unknown
   }
   interface ApiError {
   }
@@ -13,7 +13,7 @@ declare module '@fxfn/ipa' {
     headers?: Record<string, string>;
     interceptors?: {
       success?: <Res extends unknown>(data: Res) => SuccessWrapper<Res>
-      error?: <Err extends unknown>(error: Err) => ErrorWrapper<Err>
+      error?: (error: unknown) => ErrorWrapper
     }
   }
 }
@@ -49,7 +49,7 @@ export type EndpointMethods<Path extends keyof Schema, Schema, OkType = unknown,
   [Method in keyof Schema[Path] & string as Lowercase<Method>]: (
     options?: RequestConfig<Schema[Path][Method]>
   ) => Promise<
-    SuccessWrapper<UnionResponse<Schema[Path][Method]>> | ErrorWrapper<UnionResponse<Schema[Path][Method]>>
+    SuccessWrapper<UnionResponse<Schema[Path][Method]>> | ErrorWrapper
   >;
 };
 
@@ -57,7 +57,7 @@ export type APIClientPaths<Schema, OkType = unknown, ErrorType = unknown> = {
   [Path in keyof Schema]: EndpointMethods<Path, Schema, OkType, ErrorType>;
 };
 
-export type ApiResult<T> = SuccessWrapper<T> | ErrorWrapper<T>;
+export type ApiResult<T> = SuccessWrapper<T> | ErrorWrapper;
 export type ApiInput<T> = T extends (...args: [infer I]) => any ? I : never;
 export type ApiOutput<T> = T extends (...args: any[]) => Promise<infer R> ? R : never;
 

@@ -70,7 +70,7 @@ declare module '@fxfn/ipa' {
     result: T
   }
 
-  interface ErrorWrapper<T> {
+  interface ErrorWrapper {
     success: false
     result: null
     error: { 
