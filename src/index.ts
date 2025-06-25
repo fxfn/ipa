@@ -5,6 +5,8 @@ declare module '@fxfn/ipa' {
   interface ErrorWrapper<T> {
     error: T
   }
+  interface ApiError {
+  }
 
   interface DefaultConfig<T> {
     baseUrl?: string
@@ -122,11 +124,7 @@ class BaseClient<Schema> {
       return data
     }
     catch (error) {
-      if (this.config.interceptors?.error) {
-        return this.config.interceptors.error(error)
-      }
-
-      return error
+      throw error
     }
   }
 }

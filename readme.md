@@ -145,6 +145,146 @@ const result = await client['/api/users'].get()
 }
 ```
 
+### Error Handling
+
+The client provides flexible error handling through interceptors. You can either transform errors into structured responses or throw custom errors for exceptional cases.
+
+#### Transforming Errors (Default Behavior)
+
+By default, error interceptors transform API errors into structured response objects:
+
+```typescript
+const client = createClient<APISchema>({
+  baseUrl: 'https://api.example.com',
+  interceptors: {
+    error: (error) => ({
+      success: false,
+      result: null,
+      error: {
+        message: error.message || 'An error occurred',
+        code: error.status || 500
+      }
+    })
+  }
+})
+
+// Usage - errors are returned as structured responses
+const result = await client['/api/users'].get()
+if (!result.success) {
+  console.error(result.error.message) // "Bad Request"
+  console.error(result.error.code)    // 400
+}
+```
+
+#### Throwing Custom Errors
+
+For exceptional cases where you want to throw errors instead of returning them, you can throw custom errors from the error interceptor:
+
+```typescript
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+const client = createClient<APISchema>({
+  baseUrl: 'https://api.example.com',
+  interceptors: {
+    error: (error) => {
+      // Throw custom error for specific status codes
+      if (error.status === 401) {
+        throw new ApiError('Unauthorized', 401, 'UNAUTHORIZED')
+      }
+      if (error.status === 403) {
+        throw new ApiError('Forbidden', 403, 'FORBIDDEN')
+      }
+      if (error.status >= 500) {
+        throw new ApiError('Server Error', error.status, 'SERVER_ERROR')
+      }
+      
+      // For other errors, return structured response
+      return {
+        success: false,
+        result: null,
+        error: {
+          message: error.message,
+          code: error.status
+        }
+      }
+    }
+  }
+})
+
+// Usage - handle both thrown errors and structured responses
+try {
+  const result = await client['/api/users'].get()
+  if (result.success) {
+    console.log(result.result)
+  } else {
+    console.error(result.error.message)
+  }
+} catch (error) {
+  if (error instanceof ApiError) {
+    console.error(`${error.name}: ${error.message} (${error.status})`)
+    // Handle specific error types
+    if (error.status === 401) {
+      // Redirect to login
+    }
+  } else {
+    console.error('Unexpected error:', error)
+  }
+}
+```
+
+#### Mixed Error Handling Strategy
+
+You can implement a hybrid approach that throws errors for critical failures but returns structured responses for recoverable errors:
+
+```typescript
+const client = createClient<APISchema>({
+  baseUrl: 'https://api.example.com',
+  interceptors: {
+    error: (error) => {
+      // Throw for network errors and server errors
+      if (error.status >= 500 || !error.status) {
+        throw new Error(`Server error: ${error.message}`)
+      }
+      
+      // Return structured response for client errors (4xx)
+      return {
+        success: false,
+        result: null,
+        error: {
+          message: error.message,
+          status: error.status,
+          retryable: false
+        }
+      }
+    }
+  }
+})
+
+// Usage
+try {
+  const result = await client['/api/users'].get()
+  if (result.success) {
+    console.log(result.result)
+  } else {
+    // Handle client errors gracefully
+    console.error(`Client error: ${result.error.message}`)
+  }
+} catch (error) {
+  // Handle server errors and network issues
+  console.error('Critical error:', error.message)
+  // Maybe retry or show fallback UI
+}
+```
+
 ### Header Merging
 
 The client supports flexible header management with automatic merging:

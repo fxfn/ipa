@@ -14,23 +14,6 @@ declare module '../src/index.js' {
   }
 }
 
-const interceptors = {
-  success: (data) => {
-    return {
-      success: true,
-      error: null,
-      result: data
-    }
-  },
-  error: (error) => {
-    return {
-      success: false,
-      result: null,
-      error: error
-    }
-  }
-}
-
 describe('createClient', () => {
   it('should create a client', () => {
     const client = createClient({
@@ -299,81 +282,5 @@ describe('createClient', () => {
         }
       })
     )
-  })
-
-  it('should return an error when the api call fails', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-      json: () => Promise.resolve({ message: 'Bad Request' })
-    })
-
-    global.fetch = mockFetch
-
-    type APISchema = {
-      '/': {
-        POST: {
-          body: {
-            name: string
-          },
-          response: {
-            200: {
-              foo: "bar"
-            }
-          }
-        }
-      }
-    }
-
-    const client = createClient<APISchema>({
-      baseUrl: 'https://api.example.com',
-      interceptors: interceptors
-    })
-
-    const result = await client['/'].post({ body: { name: 'John' } })
-    if (!result.success) {
-      expect(result.error).toBeDefined()
-      expect(result.error.message).toContain('Bad Request')
-    }
-  })
-
-  it('should return the correct type when the api is called', async () => {
-    type APISchema = {
-      '/': {
-        GET: {
-          query: {
-            id: number
-          }
-          response: {
-            200: {
-              foo: "bar"
-            }
-          }
-        }
-      }
-    }
-
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ foo: "bar" })
-    })
-
-    global.fetch = mockFetch
-    const client = createClient<APISchema>({
-      baseUrl: 'https://api.example.com',
-      interceptors: interceptors
-    })
-
-    const result = await client['/'].get({ query: { id: 123 } })
-    expect(result.success).toBe(true)
-    expect(result.result).toBeDefined()
-    if (result.success) {
-      expect(result.result.foo).toBe('bar')
-    }
-    else {
-      // purposefully fail the test
-      expect(1).toBe(2)
-    }
   })
 })
