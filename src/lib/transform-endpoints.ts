@@ -9,12 +9,22 @@ function isNullableWrapper(val: any): val is { __nullable: true, value: any } {
   return val && typeof val === 'object' && '__nullable' in val && 'value' in val;
 }
 
+function isUnionWrapper(val: any): val is { __union: any[] } {
+  return val && typeof val === 'object' && '__union' in val && Array.isArray(val.__union);
+}
+
 function serializeType(value: any, indent: number = 0): string {
   const spaces = '  '.repeat(indent);
 
   // Handle nullable at the root
   if (isNullableWrapper(value)) {
     return serializeType(value.value, indent) + ' | null | undefined';
+  }
+
+  // Handle union types
+  if (isUnionWrapper(value)) {
+    const unionTypes = value.__union.map(t => serializeType(t, indent));
+    return unionTypes.join(' | ');
   }
 
   // Handle primitives
@@ -43,7 +53,7 @@ function serializeType(value: any, indent: number = 0): string {
   if (entries.length === 0) return '{}';
   
   const lines = entries.map(([key, val]) => {
-    if (key === '__nullable') return undefined; // skip
+    if (key === '__nullable' || key === '__union') return undefined; // skip
     const propName = isValidIdentifier(key) ? key : `"${key}"`;
     // If the property is nullable, apply the union at the property level
     let serializedVal;

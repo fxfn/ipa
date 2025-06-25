@@ -6,11 +6,21 @@ type SchemaType = {
   properties?: Record<string, SchemaType>
   additionalProperties?: boolean | SchemaType
   required?: string[]
+  anyOf?: SchemaType[]
+  oneOf?: SchemaType[]
 }
 
 // Forward declaration for recursion
 export function transformType(type: SchemaType): any {
   function getType(type: SchemaType): any {
+    // Handle anyOf/oneOf (union types)
+    if (type.anyOf || type.oneOf) {
+      const unionTypes = type.anyOf || type.oneOf || []
+      const transformedTypes = unionTypes.map((t: SchemaType) => transformType(t))
+      // Use a special marker for union types
+      return { __union: transformedTypes }
+    }
+
     switch (type.type) {
       case 'string':
         return 'string';
