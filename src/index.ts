@@ -3,7 +3,6 @@ declare module '@fxfn/ipa' {
     result: T
   }
   interface ErrorWrapper {
-    error: unknown
   }
   interface ApiError {
   }
@@ -13,7 +12,7 @@ declare module '@fxfn/ipa' {
     headers?: Record<string, string>;
     interceptors?: {
       success?: <Res extends unknown>(data: Res) => SuccessWrapper<Res>
-      error?: (error: unknown) => ErrorWrapper
+      error?: (error: any) => ErrorWrapper
     }
   }
 }
