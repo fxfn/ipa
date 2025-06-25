@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { createClient } from '../src/client.js'
+import { createClient } from '../src/index.js'
 
-declare module '../src/client.js' {
+declare module '../src/index.js' {
   interface SuccessWrapper<T> {
     success: true,
     result: T
