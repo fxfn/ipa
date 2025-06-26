@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "bin": {
-    "@fxfn/ipa": "./dist/bin/generate.js"
+    "ipa": "./dist/bin/generate.js"
   },
   "repository": {
     "type": "git",
